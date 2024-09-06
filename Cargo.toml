@@ -1,0 +1,6 @@
+[package]
+name = "r5a12-compression"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
