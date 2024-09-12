@@ -1,11 +1,9 @@
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufReader, Read};
-use std::ptr::null;
-use std::str::Chars;
 
-pub fn calcul_entropie_lettres(file_path : String) {
-    let mut fichier = match File::open(file_path) {
+pub fn calcul_entropie_lettres(file_path : String) -> f64 {
+    let fichier = match File::open(file_path) {
         Ok(f) => {
             // L'ouverture du fichier s'est bien déroulée, on renvoie l'objet
             f
@@ -14,7 +12,7 @@ pub fn calcul_entropie_lettres(file_path : String) {
             // Il y a eu un problème, affichons l'erreur pour voir ce qu'il se passe
             println!("erreur : {:?}", e);
             // On ne peut pas renvoyer le fichier ici, donc on quitte la fonction
-            return;
+            return 0f64;
         }
     };
 
@@ -28,6 +26,16 @@ pub fn calcul_entropie_lettres(file_path : String) {
         *stat += 1;
     }
 
-    println!("{:?}", occurences);
+    // nombre de caractères
+    let n:i32 = contents.len() as i32;
 
+    let mut entropie: f64 = 0f64;
+
+    for occ in occurences.values() {
+        let pi = *occ as f64 /n as f64 ;
+        // println!("{}",pi);
+        entropie -= pi * pi.log2()
+    }
+
+    entropie
 }
