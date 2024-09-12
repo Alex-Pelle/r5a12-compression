@@ -21,22 +21,13 @@ pub fn calcul_entropie_lettres(file_path : String) -> f64 {
     let mut contents = String::new();
     buf_reader.read_to_string(&mut contents).expect("Erreur dans la lecteur du fichier");
 
+    for car in contents.chars() {
+        let stat = occurences.entry(car).or_insert(0);
+        *stat += 1;
+    }
 
     // nombre de caractères
-    let mut n:i32 = contents.len() as i32;
-
-    for car in contents.chars() {
-
-        // pour considérer le retour à la ligne comme un seul caractère
-        if car == '\r' {
-            // on le retire du compte de caractères
-            n -= 1;
-        }
-        else {
-            let stat = occurences.entry(car).or_insert(0);
-            *stat += 1;
-        }
-    }
+    let n:i32 = occurences.values().sum();
 
     let mut entropie: f64 = 0f64;
 

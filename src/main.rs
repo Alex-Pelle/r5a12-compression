@@ -19,7 +19,7 @@ fn main() {
         println!("{}", entropie::calcul_entropie_mots((*f).to_owned()));
     }
 
-    println!("{}", entropie::calcul_entropie_mots("customMots.txt".to_owned()));
+    println!("{}", entropie::calcul_entropie_lettres("customMots.txt".to_owned()));
 
 }
 
