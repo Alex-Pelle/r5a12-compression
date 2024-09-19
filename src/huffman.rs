@@ -19,5 +19,6 @@ fn faire_liste_triee(map: HashMap<String, i32>) -> Vec<Node> {
         sortie.push(Node::Leaf(key,value));
     }
     sortie.sort();
+    sortie.reverse();
     sortie
 }
