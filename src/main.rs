@@ -8,7 +8,7 @@ fn main() {
     println!("Entropies par lettres");
 
     for f in files {
-        println!("{}", entropie::calcul_entropie_lettres((*f).to_owned()));
+        println!("{}", entropie::calcul_entropie(&mut entropie::comptage_lettres((*f).to_owned()).values().cloned().collect()));
     }
 
 
@@ -16,10 +16,10 @@ fn main() {
     println!("Entropies par mots");
 
     for f in files_mot {
-        println!("{}", entropie::calcul_entropie_mots((*f).to_owned()));
+        println!("{}", entropie::calcul_entropie(&mut entropie::comptage_mots((*f).to_owned()).values().cloned().collect()));
     }
 
-    println!("{}", entropie::calcul_entropie_lettres("customMots.txt".to_owned()));
+
 
 }
 

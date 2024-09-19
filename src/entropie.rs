@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufReader, Read};
 
-pub fn calcul_entropie_lettres(file_path : String) -> f64 {
+pub fn comptage_lettres(file_path : String) -> HashMap<char, i32> {
     let fichier = match File::open(file_path) {
         Ok(f) => {
             // L'ouverture du fichier s'est bien déroulée, on renvoie l'objet
@@ -12,7 +12,7 @@ pub fn calcul_entropie_lettres(file_path : String) -> f64 {
             // Il y a eu un problème, affichons l'erreur pour voir ce qu'il se passe
             println!("erreur : {:?}", e);
             // On ne peut pas renvoyer le fichier ici, donc on quitte la fonction
-            return 0f64;
+            panic!("erreur ");
         }
     };
 
@@ -27,22 +27,27 @@ pub fn calcul_entropie_lettres(file_path : String) -> f64 {
     }
 
     // nombre de caractères
-    let n:i32 = occurences.values().sum();
+
+    occurences
+
+}
+
+pub fn calcul_entropie(occurences: &mut Vec<i32>) -> f64 {
+    let n: i32 = occurences.iter().sum();
 
     let mut entropie: f64 = 0f64;
 
     println!("occurences : {:?}", occurences);
 
-    for occ in occurences.values() {
-        let pi = *occ as f64 /n as f64 ;
+    for occ in occurences {
+        let pi = *occ as f64 / n as f64;
         // println!("{}",pi);
         entropie -= pi * pi.log2()
     }
-
     entropie
 }
 
-pub fn calcul_entropie_mots(file_path : String) -> f64 {
+pub fn comptage_mots(file_path : String) -> HashMap<String, i32> {
     let fichier = match File::open(file_path) {
         Ok(f) => {
             // L'ouverture du fichier s'est bien déroulée, on renvoie l'objet
@@ -52,7 +57,7 @@ pub fn calcul_entropie_mots(file_path : String) -> f64 {
             // Il y a eu un problème, affichons l'erreur pour voir ce qu'il se passe
             println!("erreur : {:?}", e);
             // On ne peut pas renvoyer le fichier ici, donc on quitte la fonction
-            return 0f64;
+            panic!("Erreur dans la lecteur du fichier");
         }
     };
 
@@ -76,20 +81,7 @@ pub fn calcul_entropie_mots(file_path : String) -> f64 {
 
     push_word(&mut occurences, &mut mot);
 
-    println!("{:?}", occurences);
-
-    // nombre de caractères
-    let n:i32 = occurences.values().sum();
-
-    let mut entropie: f64 = 0f64;
-
-    for occ in occurences.values() {
-        let pi = *occ as f64 /n as f64 ;
-        // println!("{}",pi);
-        entropie -= pi * pi.log2()
-    }
-
-    entropie
+    occurences
 }
 
 fn push_word(occurences: &mut HashMap<String, i32>, mut mot: &mut String) {
