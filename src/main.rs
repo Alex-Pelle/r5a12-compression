@@ -1,6 +1,10 @@
+use std::collections::HashMap;
+
 mod entropie;
 mod tree;
 mod huffman;
+
+use tree::Node;
 
 fn main() {
     let files = vec!["texte1Lettres.txt","texte2Lettres.txt","texte3Lettres.txt","texte1Mots.txt","texte2Mots.txt"];
@@ -21,7 +25,11 @@ fn main() {
         println!("{}", entropie::calcul_entropie(&mut entropie::comptage_mots((*f).to_owned()).values().cloned().collect()));
     }
 
+    println!();
 
+    let map = entropie::comptage_lettres("customMots.txt".to_string());
+
+    println!("{:?}", huffman::huffman(map).unwrap().to_binary_map());
 
 }
 

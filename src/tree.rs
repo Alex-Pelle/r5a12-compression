@@ -1,4 +1,7 @@
 use std::cmp::Ordering;
+use std::collections::HashMap;
+use either::*;
+
 
 pub enum Node {
     Leaf(String, i32),
@@ -17,6 +20,46 @@ impl Node {
         match self {
             Node::Leaf(string, _) => string.to_string(),
             Node::Internal(left, right) => left.to_string() + &right.to_string()
+        }
+    }
+
+    pub fn to_binary_map(&self) -> HashMap<String, String> {
+        match self.convert() {
+            Either::Left(_) => panic!(),
+            Either::Right(map) => map,
+        }
+    }
+
+    fn convert(&self) -> Either<String, HashMap<String, String>> {
+        match self {
+            Node::Leaf(string, _) => Either::Left(string.to_owned()),
+            Node::Internal(left, right) => {
+                let mut map:HashMap<String, String> = HashMap::new();
+
+                match left.convert() {
+                    Either::Left(string) => {
+                        map.insert(string, "0".to_owned());
+                    },
+                    Either::Right(embedded_map) => {
+                        for (key, value) in embedded_map {
+                            map.insert(key, "0".to_owned() + &value);
+                        }
+                    }
+                };
+
+                match right.convert() {
+                    Either::Left(string) => {
+                        map.insert(string, "1".to_owned());
+                    },
+                    Either::Right(embedded_map) => {
+                        for (key, value) in embedded_map {
+                            map.insert(key, "1".to_owned() + &value);
+                        }
+                    }
+                }
+
+                Either::Right(map)
+            }
         }
     }
 }
