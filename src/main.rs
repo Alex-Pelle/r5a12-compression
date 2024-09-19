@@ -1,4 +1,5 @@
 mod entropie;
+mod tree;
 
 fn main() {
     let files = vec!["texte1Lettres.txt","texte2Lettres.txt","texte3Lettres.txt","texte1Mots.txt","texte2Mots.txt"];

@@ -84,7 +84,7 @@ pub fn comptage_mots(file_path : String) -> HashMap<String, i32> {
     occurences
 }
 
-fn push_word(occurences: &mut HashMap<String, i32>, mut mot: &mut String) {
+fn push_word(occurences: &mut HashMap<String, i32>, mot: &mut String) {
     if !mot.is_empty() {
         let stat = occurences.entry(mot.clone()).or_insert(0);
         *stat += 1;
