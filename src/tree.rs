@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-enum Node {
+pub enum Node {
     Leaf(String, i32),
     Internal(Box<Node>, Box<Node> )
 }
