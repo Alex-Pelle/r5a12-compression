@@ -14,23 +14,28 @@ fn main() {
     println!("Entropies par lettres");
 
     for f in files {
-        println!("{}", entropie::calcul_entropie(&mut entropie::comptage_lettres((*f).to_owned()).values().cloned().collect()));
-    }
+
+
+        let map = entropie::comptage_lettres((*f).to_owned());
+
+        println!("{:?}", huffman::huffman(map).unwrap().to_binary_map());    }
 
 
     println!();
     println!("Entropies par mots");
 
     for f in files_mot {
-        println!("{}", entropie::calcul_entropie(&mut entropie::comptage_mots((*f).to_owned()).values().cloned().collect()));
-    }
+
+
+        let map = entropie::comptage_mots((*f).to_owned());
+
+        println!("{:?}", huffman::huffman(map).unwrap().to_binary_map());    }
 
     println!();
 
-    let map = entropie::comptage_lettres("customMots.txt".to_string());
+    let map = entropie::comptage_lettres("customMots.txt".to_owned());
 
     println!("{:?}", huffman::huffman(map).unwrap().to_binary_map());
-
 }
 
 

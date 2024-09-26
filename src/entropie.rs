@@ -37,7 +37,6 @@ pub fn calcul_entropie(occurences: &mut Vec<i32>) -> f64 {
 
     let mut entropie: f64 = 0f64;
 
-    println!("occurences : {:?}", occurences);
     for occ in occurences {
         let pi = *occ as f64 / n as f64;
         // println!("{}",pi);
