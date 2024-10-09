@@ -24,19 +24,19 @@ impl Node {
     }
 
     pub fn to_binary_map(&self) -> HashMap<String, String> {
-        match self.convert() {
+        match self.to_hash_map() {
             Either::Left(_) => panic!(),
             Either::Right(map) => map,
         }
     }
 
-    fn convert(&self) -> Either<String, HashMap<String, String>> {
+    pub fn to_hash_map(&self) -> Either<String, HashMap<String, String>> {
         match self {
             Node::Leaf(string, _) => Either::Left(string.to_owned()),
             Node::Internal(left, right) => {
                 let mut map:HashMap<String, String> = HashMap::new();
 
-                match left.convert() {
+                match left.to_hash_map() {
                     Either::Left(string) => {
                         map.insert(string, "0".to_owned());
                     },
@@ -47,7 +47,7 @@ impl Node {
                     }
                 };
 
-                match right.convert() {
+                match right.to_hash_map() {
                     Either::Left(string) => {
                         map.insert(string, "1".to_owned());
                     },
