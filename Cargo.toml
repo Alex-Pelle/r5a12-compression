@@ -5,3 +5,5 @@ edition = "2021"
 
 [dependencies]
 either = "1.13.0"
+log = "0.4.22"
+bitstream-io = "2.5.3"

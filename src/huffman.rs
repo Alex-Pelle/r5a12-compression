@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::error::Error;
 use either::Either;
 use crate::tree::Node;
 
@@ -42,9 +43,9 @@ fn iterer_liste(v: &mut Vec<Node>) {
     v.reverse();
 }
 
-pub(crate) fn to_canonical(tree: Node) -> Result(HashMap<String, u8>) {
+pub(crate) fn to_canonical(tree: &Node) -> Result<HashMap<String, u8>, String> {
     let map = match tree.to_hash_map() {
-        Either::Left(_) => return Err("Invalid tree"),
+        Either::Left(_) => return Err("Invalid tree".to_owned()),
         Either::Right(map) => map
     };
 
@@ -60,7 +61,7 @@ pub(crate) fn to_canonical(tree: Node) -> Result(HashMap<String, u8>) {
 
     // println!("{:?}",canonical_map);
 
-    Some(canonical_map);
+    Ok(canonical_map)
 }
 
 fn list_to_hashmap(canonical_list: Vec<(String, u8)>) -> HashMap<String, u8> {
@@ -86,7 +87,7 @@ fn list_to_canonical(first_list: Vec<(String, u8)>) -> Vec<(String, u8)> {
     canonical_list
 }
 
-fn to_list_for_canonical(map: HashMap<String, String>) -> Vec<(String, u8)> {
+pub fn to_list_for_canonical(map: HashMap<String, String>) -> Vec<(String, u8)> {
     let mut list: Vec<(String, u8)> = vec![];
 
     'outer: for (key, value) in map {
@@ -103,4 +104,58 @@ fn to_list_for_canonical(map: HashMap<String, String>) -> Vec<(String, u8)> {
         continue 'outer;
     }
     list
+}
+
+pub fn max_encoded_length(map: &mut HashMap<String, u8>) -> u8 {
+    let mut max = 0u8;
+
+    for (_, size) in map {
+        let s = (*size as f32).log(2f32).trunc() as u8 +1;
+        if s > max {
+            max = s
+        }
+    }
+
+    max
+}
+
+pub fn number_of_symbols(map: &mut HashMap<String, u8>) -> u8 {
+    map.len() as u8
+}
+
+
+pub fn length_list(map: &mut HashMap<String, u8>) -> Vec<u8> {
+    let mut l: Vec<u8> = vec![0; max_encoded_length(map) as usize];
+
+    for (_, size) in map {
+        let s = (*size as f32).log(2f32).trunc() as u8 +1;
+        l[s as usize -1] += 1;
+    }
+
+    l
+}
+
+pub fn to_ordered_list(map: &HashMap<String, u8>) -> Vec<u8> {
+    let mut list = vec![];
+
+    'outer: for (key, size) in map {
+
+        for (i, (k, s)) in list.iter().enumerate() {
+            if size < *s || (size == *s && key < *k) {
+                list.insert(i, (key, size));
+                continue 'outer;
+            }
+        }
+
+        list.push((key, size));
+        continue 'outer;
+    }
+
+    let mut l = vec![];
+
+    for (s, v) in list {
+        l.push(s.chars().last().unwrap() as u8);
+    }
+
+    l
 }
