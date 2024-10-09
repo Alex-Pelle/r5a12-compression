@@ -40,32 +40,6 @@ fn main() {
 
     let map = entropie::comptage_lettres("customMots.txt".to_owned());
 
-    let non_canonical = huffman::huffman(map).unwrap();
-    let mut cannonical:HashMap<String, u8> = huffman::to_canonical(&non_canonical).unwrap();
-
-    println!("{:?}", cannonical);
-    println!("{:?}", max_encoded_length(&mut cannonical));
-    let size_of_header = 1 + max_encoded_length(&mut cannonical) + number_of_symbols(&mut cannonical) + 1;
-
-    let mut header:Vec<u8> = vec![0; size_of_header as usize];
-
-    println!("{:?}", header);
-
-    header[0] = max_encoded_length(&mut cannonical);
-    for (i, n) in huffman::length_list(&mut cannonical).iter().enumerate() {
-        header[i +1] = *n
-    }
-
-    header[0] = max_encoded_length(&mut cannonical);
-    for (i, n) in huffman::length_list(&mut cannonical).iter().enumerate() {
-        header[i +1] = *n
-    }
-
-    println!("{:?}", to_ordered_list(&cannonical));
-
-    for (i, s) in to_ordered_list(&cannonical).iter().enumerate() {
-        header[1 + max_encoded_length(&mut cannonical) as usize + i] = *s;
-    }
 
 
 
@@ -87,9 +61,20 @@ fn main() {
     let mut contents = String::new();
     buf_reader.read_to_string(&mut contents).expect("Erreur dans la lecteur du fichier");
 
-    header[size_of_header as usize - 1] = contents.chars().count() as u8;
+    let non_canonical = huffman::huffman(map).unwrap();
+    let mut cannonical:HashMap<String, u8> = huffman::to_canonical(&non_canonical).unwrap();
 
-    let mut write = match File::create("test.txt") {
+    println!("{:?}", cannonical);
+    println!("{:?}", max_encoded_length(&mut cannonical));
+
+
+    encodeFile(&mut cannonical, contents, "caca.rizz".to_string());
+}
+
+fn encodeFile(mut cannonical: &mut HashMap<String, u8>, contents: String,  out : String) {
+    let header = generate_header(&mut cannonical, &contents);
+
+    let write = match File::create(out) {
         Ok(f) => {
             // L'ouverture du fichier s'est bien déroulée, on renvoie l'objet
             f
@@ -103,12 +88,11 @@ fn main() {
     };
 
 
-    let mut writer:BitWriter<File, BigEndian> = BitWriter::new(write);
+    let mut writer: BitWriter<File, BigEndian> = BitWriter::new(write);
 
     writer.write_bytes(&*header).expect("Erreur écriture");
 
     for c in contents.chars() {
-
         let x = cannonical[&(c.to_string())];
         println!("{:?}", x);
         write_binary(x, &mut writer);
@@ -118,7 +102,6 @@ fn main() {
             writer.write_bit(x % 2 == 1).expect("TODO: panic message");
         }
         println!();
-
     }
 
     writer.write(7, 0).expect("TODO: panic message");
@@ -126,6 +109,33 @@ fn main() {
     writer.flush().expect("TODO: panic message");
 
     println!("{:?}", header);
+}
+
+fn generate_header(mut cannonical: &mut &mut HashMap<String, u8>, contents: &String) -> Vec<u8> {
+    let size_of_header = 1 + max_encoded_length(&mut cannonical) + number_of_symbols(&mut cannonical) + 1;
+
+    let mut header: Vec<u8> = vec![0; size_of_header as usize];
+
+    println!("{:?}", header);
+
+    header[0] = max_encoded_length(&mut cannonical);
+    for (i, n) in huffman::length_list(&mut cannonical).iter().enumerate() {
+        header[i + 1] = *n
+    }
+
+    header[0] = max_encoded_length(&mut cannonical);
+    for (i, n) in huffman::length_list(&mut cannonical).iter().enumerate() {
+        header[i + 1] = *n
+    }
+
+    println!("{:?}", to_ordered_list(&cannonical));
+
+    for (i, s) in to_ordered_list(&cannonical).iter().enumerate() {
+        header[1 + max_encoded_length(&mut cannonical) as usize + i] = *s;
+    }
+
+    header[size_of_header as usize - 1] = contents.chars().count() as u8;
+    header
 }
 
 fn write_binary(x: u8, writer: &mut BitWriter<File, BigEndian>) {
