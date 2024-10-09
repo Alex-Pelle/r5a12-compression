@@ -45,7 +45,7 @@ fn main() {
 
     println!("{:?}", cannonical);
     println!("{:?}", max_encoded_length(&mut cannonical));
-    let size_of_header = 1 + max_encoded_length(&mut cannonical) + number_of_symbols(&mut cannonical);
+    let size_of_header = 1 + max_encoded_length(&mut cannonical) + number_of_symbols(&mut cannonical) + 1;
 
     let mut header:Vec<u8> = vec![0; size_of_header as usize];
 
@@ -68,6 +68,7 @@ fn main() {
     }
 
 
+
     let fichier = match File::open("customMots.txt") {
         Ok(f) => {
             // L'ouverture du fichier s'est bien déroulée, on renvoie l'objet
@@ -81,10 +82,12 @@ fn main() {
         }
     };
 
+
     let mut buf_reader = BufReader::new(fichier);
     let mut contents = String::new();
     buf_reader.read_to_string(&mut contents).expect("Erreur dans la lecteur du fichier");
 
+    header[size_of_header as usize - 1] = contents.chars().count() as u8;
 
     let mut write = match File::create("test.txt") {
         Ok(f) => {
@@ -100,27 +103,32 @@ fn main() {
     };
 
 
+    let mut writer:BitWriter<File, BigEndian> = BitWriter::new(write);
 
-    write.write(&*header).expect("Erreur écriture");
-    let mut writer:BitWriter<File, LittleEndian> = BitWriter::new(write);
+    writer.write_bytes(&*header).expect("Erreur écriture");
 
     for c in contents.chars() {
-        println!("{:?}", cannonical[&(c.to_string())]);
-        write_binary(cannonical[&(c.to_string())], &mut writer);
 
-        if cannonical[&(c.to_string())] == 0 {
-            
+        let x = cannonical[&(c.to_string())];
+        println!("{:?}", x);
+        write_binary(x, &mut writer);
+
+        if x == 0 {
+            print!("{:?}", x % 2);
+            writer.write_bit(x % 2 == 1).expect("TODO: panic message");
         }
         println!();
 
     }
+
+    writer.write(7, 0).expect("TODO: panic message");
 
     writer.flush().expect("TODO: panic message");
 
     println!("{:?}", header);
 }
 
-fn write_binary(x: u8, writer: &mut BitWriter<File, LittleEndian>) {
+fn write_binary(x: u8, writer: &mut BitWriter<File, BigEndian>) {
 
     if x <= 0 {
         return
