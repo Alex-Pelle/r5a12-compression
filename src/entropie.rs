@@ -50,8 +50,7 @@ pub fn comptage_mots(file_path : String) -> HashMap<String, i32> {
     let mut mot = String::from("");
     for car in contents.chars() {
         match car {
-            ' ' => push_word(&mut occurences, &mut mot),
-            '.'|'\n'|'\r' => {
+            ' '|','|';'|'!'|'?'|'.'|'\n'|'\r' => {
                 push_word(&mut occurences, &mut mot);
                 push_word(&mut occurences, &mut String::from(car));
             }

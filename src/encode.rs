@@ -48,26 +48,28 @@ pub fn encode_file(fin: String, out : String) {
     println!("{:?}", header);
 }
 
-fn generate_header(cannonical: &HashMap<String, u8>, contents: &String) -> Vec<u8> {
+fn generate_header(cannonical: &HashMap<String, u8>, contents: &String, encoding_words: bool) -> Vec<u8> {
     let max_length = max_encoded_length(&cannonical);
-    let size_of_header = 1 + max_length + number_of_symbols(&cannonical) + 1;
+    if !encoding_words {
+        let size_of_header = 1 + max_length + number_of_symbols(&cannonical) + 1;
 
-    let mut header: Vec<u8> = vec![0; size_of_header as usize];
+        let mut header: Vec<u8> = vec![0; size_of_header as usize];
 
-    println!("{:?}", header);
+        println!("{:?}", header);
 
-    header[0] = max_length;
-    for (i, n) in huffman::length_list(&cannonical).iter().enumerate() {
-        header[i + 1] = *n
+        header[0] = max_length;
+        for (i, n) in huffman::length_list(&cannonical).iter().enumerate() {
+            header[i + 1] = *n
+        }
+
+        println!("{:?}", to_ordered_list(&cannonical));
+
+        for (i, s) in to_ordered_list(&cannonical).iter().enumerate() {
+            header[1 + max_length as usize + i] = *s;
+        }
+
+        header[size_of_header as usize - 1] = contents.chars().count() as u8;
     }
-
-    println!("{:?}", to_ordered_list(&cannonical));
-
-    for (i, s) in to_ordered_list(&cannonical).iter().enumerate() {
-        header[1 + max_length as usize + i] = *s;
-    }
-
-    header[size_of_header as usize - 1] = contents.chars().count() as u8;
     header
 }
 

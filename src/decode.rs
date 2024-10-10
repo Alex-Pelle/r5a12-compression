@@ -4,7 +4,7 @@ use std::io::{BufReader, Read, Write};
 use bitstream_io::{BigEndian, BitRead, BitReader, BitWriter, ByteWrite, ByteWriter};
 use crate::huffman;
 use crate::huffman::list_to_canonical;
-use crate::utils::{create_file, open_file};
+use crate::utils::{binary_word_to_string, create_file, open_file};
 
 pub fn decode_file(fin:String, fout : String) {
     let input_file = open_file(fin);
@@ -52,25 +52,44 @@ fn create_cannonical_map(reader: &mut BitReader<File, BigEndian>) -> HashMap<u8,
         nombre_de_mots_dans_chaque_taille[i as usize] = reader.read::<u8>(8).unwrap();
     }
     println!("Nombre de mots de chaque tailles: {:?}", nombre_de_mots_dans_chaque_taille);
+    let reading_words = reader.read_bit().unwrap();
+    let nb_entite_a_lire: usize = nombre_de_mots_dans_chaque_taille.iter().sum::<u8>() as usize;
+    let mut list_for_cannonical: Vec<(String, u8)> = vec![("".to_string(), 0u8); nb_entite_a_lire];
 
-    let nb_char_a_lire: usize = nombre_de_mots_dans_chaque_taille.iter().sum::<u8>() as usize;
-    println!("Nombre de chars à lire : {:?}", nb_char_a_lire);
+    if !reading_words { // 0 c'est pour un fichier rempli de caractères uniquement et 1 qui contient des mots
 
-    let mut list_for_cannonical: Vec<(String, u8)> = vec![("".to_string(), 0u8); nb_char_a_lire];
+        println!("Nombre de chars à lire : {:?}", nb_entite_a_lire);
 
-    let mut current_taille = 0;
-    let mut nb_char_restant_dans_taille = 0;
+        let mut current_taille = 0;
+        let mut nb_char_restant_dans_taille = 0;
 
-    for i in 0..nb_char_a_lire {
-        while nb_char_restant_dans_taille == 0 {
-            nb_char_restant_dans_taille = nombre_de_mots_dans_chaque_taille[current_taille];
-            current_taille += 1;
+        for i in 0..nb_entite_a_lire {
+            while nb_char_restant_dans_taille == 0 {
+                nb_char_restant_dans_taille = nombre_de_mots_dans_chaque_taille[current_taille];
+                current_taille += 1;
+            }
+
+            list_for_cannonical[i] = ((reader.read::<u8>(8).unwrap() as char).to_string(), current_taille as u8);
+            nb_char_restant_dans_taille -= 1;
         }
+        println!("Liste pour créer l'arbre canonique{:?}", list_for_cannonical);
+    } else {
+        println!("Nombre de mots à lire : {:?}", nb_entite_a_lire);
 
-        list_for_cannonical[i] = ((reader.read::<u8>(8).unwrap() as char).to_string(), current_taille as u8);
-        nb_char_restant_dans_taille -= 1;
+        let mut current_taille = 0;
+        let mut nb_char_restant_dans_taille = 0;
+
+
+        for i in 0..nb_entite_a_lire {
+            while nb_char_restant_dans_taille == 0 {
+                nb_char_restant_dans_taille = nombre_de_mots_dans_chaque_taille[current_taille];
+                current_taille += 1;
+            }
+
+            list_for_cannonical[i] = (binary_word_to_string(reader), current_taille as u8);
+            nb_char_restant_dans_taille -= 1;
+        }
+        println!("Liste pour créer l'arbre canonique{:?}", list_for_cannonical);
     }
-    println!("Liste pour créer l'arbre canonique{:?}", list_for_cannonical);
-
     huffman::list_to_hashmap_decoding(list_to_canonical(list_for_cannonical))
 }
