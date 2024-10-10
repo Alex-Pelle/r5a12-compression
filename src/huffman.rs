@@ -57,14 +57,14 @@ pub(crate) fn to_canonical(tree: &Node) -> Result<HashMap<String, u8>, String> {
 
     // println!("{:?}",canonical_list);
 
-    let canonical_map = list_to_hashmap(canonical_list);
+    let canonical_map = list_to_hashmap_encoding(canonical_list);
 
     // println!("{:?}",canonical_map);
 
     Ok(canonical_map)
 }
 
-fn list_to_hashmap(canonical_list: Vec<(String, u8)>) -> HashMap<String, u8> {
+pub fn list_to_hashmap_encoding(canonical_list: Vec<(String, u8)>) -> HashMap<String, u8> {
     let mut canonical_map = HashMap::new();
 
     for (k, v) in canonical_list {
@@ -73,7 +73,16 @@ fn list_to_hashmap(canonical_list: Vec<(String, u8)>) -> HashMap<String, u8> {
     canonical_map
 }
 
-fn list_to_canonical(first_list: Vec<(String, u8)>) -> Vec<(String, u8)> {
+pub fn list_to_hashmap_decoding(canonical_list: Vec<(String, u8)>) -> HashMap<u8, String> {
+    let mut canonical_map = HashMap::new();
+
+    for (k, v) in canonical_list {
+        canonical_map.insert(v, k);
+    }
+    canonical_map
+}
+
+pub(crate) fn list_to_canonical(first_list: Vec<(String, u8)>) -> Vec<(String, u8)> {
     let mut canonical_list = vec![];
     let mut code = 0u8;
     for (i, (v, s)) in first_list.iter().enumerate() {

@@ -1,148 +1,95 @@
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Read, Write};
-use std::sync::atomic::AtomicIsize;
 use bitstream_io::{BigEndian, BitWrite, LittleEndian};
-use bitstream_io::write::BitWriter;
+use encode::encode_file;
+use std::env;
 
 mod entropie;
 mod tree;
 mod huffman;
+mod encode;
+mod utils;
+mod decode;
 
 use tree::Node;
+use crate::decode::decode_file;
 use crate::huffman::{max_encoded_length, number_of_symbols, to_list_for_canonical, to_ordered_list};
+use crate::Mode::{DECODE, ENCODE};
+use crate::utils::open_file;
+
+enum Mode {
+    ENCODE,
+    DECODE
+}
+
+impl PartialEq for Mode {
+    fn eq(&self, other: &Mode) -> bool {
+        match self {
+            ENCODE => *other == ENCODE,
+            DECODE => *other == DECODE,
+        }
+    }
+}
+
+impl Eq for Mode {}
 
 fn main() {
-    let files = vec!["texte1Lettres.txt","texte2Lettres.txt","texte3Lettres.txt","texte1Mots.txt","texte2Mots.txt"];
-    let files_mot = vec!["texte1Mots.txt","texte2Mots.txt"];
 
-    /* println!("Entropies par lettres");
+    let args: Vec<String> = env::args().collect();
 
-    for f in files {
+    println!("{:?}", args);
 
+    let mut mode: Option<Mode> = None;
+    let mut from: Option<String>= None;
+    let mut to: Option<String> = None;
 
-        let map = entropie::comptage_lettres((*f).to_owned());
-
-        println!("{:?}", huffman::huffman(map).unwrap().to_binary_map());    }
-
-
-    println!();
-    println!("Entropies par mots");
-
-    for f in files_mot {
-
-
-        let map = entropie::comptage_mots((*f).to_owned());
-
-        println!("{:?}", huffman::huffman(map).unwrap().to_binary_map());    }
-
-    println!(); */
-
-    let map = entropie::comptage_lettres("customMots.txt".to_owned());
-
-
-
-
-    let fichier = match File::open("customMots.txt") {
-        Ok(f) => {
-            // L'ouverture du fichier s'est bien déroulée, on renvoie l'objet
-            f
+    for arg in &args[1..] {
+        match arg.as_str() {
+            "-c" => if mode == None {
+                mode = Some(ENCODE);
+            } else {
+                println!("Un seul mode à la fois svp");
+                return;
+            },
+            "-d" => if mode == None {
+                mode = Some(DECODE);
+            } else {
+                println!("Un seul mode à la fois svp");
+                return;
+            },
+            arg if arg.to_string().chars().next().unwrap() == '-' => {
+                println!("Flag inconnu");
+                return;
+            }
+            _ => {
+                if from == None {
+                    from = Some(arg.clone());
+                }
+                else if to == None {
+                    to = Some(arg.clone());
+                }
+                else {
+                    println!("Trop d'arguments, <mode> <input> <output>");
+                    return;
+                }
+            }
         }
-        Err(e) => {
-            // Il y a eu un problème, affichons l'erreur pour voir ce qu'il se passe
-            println!("erreur : {:?}", e);
-            // On ne peut pas renvoyer le fichier ici, donc on quitte la fonction
-            panic!("erreur ");
-        }
-    };
-
-
-    let mut buf_reader = BufReader::new(fichier);
-    let mut contents = String::new();
-    buf_reader.read_to_string(&mut contents).expect("Erreur dans la lecteur du fichier");
-
-    let non_canonical = huffman::huffman(map).unwrap();
-    let cannonical:HashMap<String, u8> = huffman::to_canonical(&non_canonical).unwrap();
-
-    println!("{:?}", cannonical);
-    println!("{:?}", max_encoded_length(&cannonical));
-
-
-    encodeFile(&cannonical, contents, "caca.rizz".to_string());
-}
-
-fn encodeFile(cannonical: &HashMap<String, u8>, contents: String,  out : String) {
-    let header = generate_header(&cannonical, &contents);
-
-    let write = match File::create(out) {
-        Ok(f) => {
-            // L'ouverture du fichier s'est bien déroulée, on renvoie l'objet
-            f
-        }
-        Err(e) => {
-            // Il y a eu un problème, affichons l'erreur pour voir ce qu'il se passe
-            println!("erreur : {:?}", e);
-            // On ne peut pas renvoyer le fichier ici, donc on quitte la fonction
-            panic!("erreur ");
-        }
-    };
-
-
-    let mut writer: BitWriter<File, BigEndian> = BitWriter::new(write);
-
-    writer.write_bytes(&*header).expect("Erreur écriture");
-
-    for c in contents.chars() {
-        let x = cannonical[&(c.to_string())];
-        println!("{:?}", x);
-        write_binary(x, &mut writer);
-
-        if x == 0 {
-            print!("{:?}", x % 2);
-            writer.write_bit(x % 2 == 1).expect("TODO: panic message");
-        }
-        println!();
     }
 
-    writer.write(7, 0).expect("TODO: panic message");
-
-    writer.flush().expect("TODO: panic message");
-
-    println!("{:?}", header);
-}
-
-fn generate_header(cannonical: &HashMap<String, u8>, contents: &String) -> Vec<u8> {
-    let max_length = max_encoded_length(&cannonical);
-    let size_of_header = 1 + max_length + number_of_symbols(&cannonical) + 1;
-
-    let mut header: Vec<u8> = vec![0; size_of_header as usize];
-
-    println!("{:?}", header);
-
-    header[0] = max_length;
-    for (i, n) in huffman::length_list(&cannonical).iter().enumerate() {
-        header[i + 1] = *n
+    if mode == None || to == None {
+        println!("Pas assez d'arguments, <mode> <input> <output>");
+        return;
     }
 
-    println!("{:?}", to_ordered_list(&cannonical));
-
-    for (i, s) in to_ordered_list(&cannonical).iter().enumerate() {
-        header[1 + max_length as usize + i] = *s;
+    match mode.unwrap() {
+        ENCODE => encode_file(from.unwrap(), to.unwrap()),
+        DECODE => decode_file(from.unwrap(), to.unwrap())
     }
 
-    header[size_of_header as usize - 1] = contents.chars().count() as u8;
-    header
 }
 
-fn write_binary(x: u8, writer: &mut BitWriter<File, BigEndian>) {
 
-    if x <= 0 {
-        return
-    }
-    write_binary(x / 2, writer);
-    print!("{:?}", x % 2);
-    writer.write_bit(x % 2 == 1).expect("TODO: panic message");
-}
 
 
 
