@@ -106,7 +106,7 @@ pub fn to_list_for_canonical(map: HashMap<String, String>) -> Vec<(String, u8)> 
     list
 }
 
-pub fn max_encoded_length(map: &mut HashMap<String, u8>) -> u8 {
+pub fn max_encoded_length(map: &HashMap<String, u8>) -> u8 {
     let mut max = 0u8;
 
     for (_, size) in map {
@@ -119,12 +119,12 @@ pub fn max_encoded_length(map: &mut HashMap<String, u8>) -> u8 {
     max
 }
 
-pub fn number_of_symbols(map: &mut HashMap<String, u8>) -> u8 {
+pub fn number_of_symbols(map: &HashMap<String, u8>) -> u8 {
     map.len() as u8
 }
 
 
-pub fn length_list(map: &mut HashMap<String, u8>) -> Vec<u8> {
+pub fn length_list(map: &HashMap<String, u8>) -> Vec<u8> {
     let mut l: Vec<u8> = vec![0; max_encoded_length(map) as usize];
 
     for (_, size) in map {

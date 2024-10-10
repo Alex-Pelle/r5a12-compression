@@ -62,17 +62,17 @@ fn main() {
     buf_reader.read_to_string(&mut contents).expect("Erreur dans la lecteur du fichier");
 
     let non_canonical = huffman::huffman(map).unwrap();
-    let mut cannonical:HashMap<String, u8> = huffman::to_canonical(&non_canonical).unwrap();
+    let cannonical:HashMap<String, u8> = huffman::to_canonical(&non_canonical).unwrap();
 
     println!("{:?}", cannonical);
-    println!("{:?}", max_encoded_length(&mut cannonical));
+    println!("{:?}", max_encoded_length(&cannonical));
 
 
-    encodeFile(&mut cannonical, contents, "caca.rizz".to_string());
+    encodeFile(&cannonical, contents, "caca.rizz".to_string());
 }
 
-fn encodeFile(mut cannonical: &mut HashMap<String, u8>, contents: String,  out : String) {
-    let header = generate_header(&mut cannonical, &contents);
+fn encodeFile(cannonical: &HashMap<String, u8>, contents: String,  out : String) {
+    let header = generate_header(&cannonical, &contents);
 
     let write = match File::create(out) {
         Ok(f) => {
@@ -111,27 +111,23 @@ fn encodeFile(mut cannonical: &mut HashMap<String, u8>, contents: String,  out :
     println!("{:?}", header);
 }
 
-fn generate_header(mut cannonical: &mut &mut HashMap<String, u8>, contents: &String) -> Vec<u8> {
-    let size_of_header = 1 + max_encoded_length(&mut cannonical) + number_of_symbols(&mut cannonical) + 1;
+fn generate_header(cannonical: &HashMap<String, u8>, contents: &String) -> Vec<u8> {
+    let max_length = max_encoded_length(&cannonical);
+    let size_of_header = 1 + max_length + number_of_symbols(&cannonical) + 1;
 
     let mut header: Vec<u8> = vec![0; size_of_header as usize];
 
     println!("{:?}", header);
 
-    header[0] = max_encoded_length(&mut cannonical);
-    for (i, n) in huffman::length_list(&mut cannonical).iter().enumerate() {
-        header[i + 1] = *n
-    }
-
-    header[0] = max_encoded_length(&mut cannonical);
-    for (i, n) in huffman::length_list(&mut cannonical).iter().enumerate() {
+    header[0] = max_length;
+    for (i, n) in huffman::length_list(&cannonical).iter().enumerate() {
         header[i + 1] = *n
     }
 
     println!("{:?}", to_ordered_list(&cannonical));
 
     for (i, s) in to_ordered_list(&cannonical).iter().enumerate() {
-        header[1 + max_encoded_length(&mut cannonical) as usize + i] = *s;
+        header[1 + max_length as usize + i] = *s;
     }
 
     header[size_of_header as usize - 1] = contents.chars().count() as u8;
