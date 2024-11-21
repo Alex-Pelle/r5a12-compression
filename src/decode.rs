@@ -44,7 +44,8 @@ pub fn decode_file(fin:String, fout : String) {
 }
 
 fn create_cannonical_map(reader: &mut BitReader<File, BigEndian>) -> HashMap<u8, String> {
-    let taille_max = reader.read::<u8>(8).unwrap();
+    let reading_words = reader.read_bit().unwrap();
+    let taille_max = reader.read::<u8>(7).unwrap();
     println!("Taille max des mots binaires{:?}", taille_max);
     let mut nombre_de_mots_dans_chaque_taille = vec![0u8; taille_max as usize];
 
@@ -52,7 +53,6 @@ fn create_cannonical_map(reader: &mut BitReader<File, BigEndian>) -> HashMap<u8,
         nombre_de_mots_dans_chaque_taille[i as usize] = reader.read::<u8>(8).unwrap();
     }
     println!("Nombre de mots de chaque tailles: {:?}", nombre_de_mots_dans_chaque_taille);
-    let reading_words = reader.read_bit().unwrap();
     let nb_entite_a_lire: usize = nombre_de_mots_dans_chaque_taille.iter().sum::<u8>() as usize;
     let mut list_for_cannonical: Vec<(String, u8)> = vec![("".to_string(), 0u8); nb_entite_a_lire];
 

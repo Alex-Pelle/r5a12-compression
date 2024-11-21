@@ -168,3 +168,28 @@ pub fn to_ordered_list(map: &HashMap<String, u8>) -> Vec<u8> {
 
     l
 }
+
+pub fn to_ordered_list_words(map: &HashMap<String, u8>) -> Vec<&String> {
+    let mut list = vec![];
+
+    'outer: for (key, size) in map {
+
+        for (i, (k, s)) in list.iter().enumerate() {
+            if size < *s || (size == *s && key < *k) {
+                list.insert(i, (key, size));
+                continue 'outer;
+            }
+        }
+
+        list.push((key, size));
+        continue 'outer;
+    }
+
+    let mut l = vec![];
+
+    for (s, v) in list {
+        l.push(s);
+    }
+
+    l
+}
