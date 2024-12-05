@@ -19,12 +19,14 @@ pub fn decode_file(fin:String, fout : String) {
     println!("Cannonical map : {:?}", canonical_map);
 
     let mut key;
-    'outer: for i in 0..reader.read::<u8>(8).unwrap() {
-        key = 0;
+    let number_of_words = reader.read::<u32>(32).unwrap();
+    println!("Number of words: {}", number_of_words);
+    'outer: for i in 0..number_of_words{
+        key = String::new();
         loop {
             let bit = reader.read_bit().unwrap();
 
-            key += bit as u8;
+            key.push(('0' as u8 + bit as u8) as char);
             println!("Key: {:?}", key);
 
             match canonical_map.get(&key) {
@@ -37,13 +39,11 @@ pub fn decode_file(fin:String, fout : String) {
                 None => ()
             }
 
-            key = key << 1;
-
         }
     }
 }
 
-fn create_cannonical_map(reader: &mut BitReader<File, BigEndian>) -> HashMap<u8, String> {
+fn create_cannonical_map(reader: &mut BitReader<File, BigEndian>) -> HashMap<String, String> {
     let reading_words = reader.read_bit().unwrap();
     let taille_max = reader.read::<u8>(7).unwrap();
     println!("Taille max des mots binaires{:?}", taille_max);

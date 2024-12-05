@@ -43,7 +43,7 @@ fn iterer_liste(v: &mut Vec<Node>) {
     v.reverse();
 }
 
-pub(crate) fn to_canonical(tree: &Node) -> Result<HashMap<String, u8>, String> {
+pub(crate) fn to_canonical(tree: &Node) -> Result<HashMap<String, String>, String> {
     let map = match tree.to_hash_map() {
         Either::Left(_) => return Err("Invalid tree".to_owned()),
         Either::Right(map) => map
@@ -51,20 +51,20 @@ pub(crate) fn to_canonical(tree: &Node) -> Result<HashMap<String, u8>, String> {
 
     let first_list = to_list_for_canonical(map);
 
-    // println!("{:?}",list);
+    println!("list for canonical: {:?}",first_list);
 
     let canonical_list = list_to_canonical(first_list);
 
-    // println!("{:?}",canonical_list);
+    println!("canonical list: {:?}",canonical_list);
 
     let canonical_map = list_to_hashmap_encoding(canonical_list);
 
-    // println!("{:?}",canonical_map);
+    println!("canonical map: {:?}",canonical_map);
 
     Ok(canonical_map)
 }
 
-pub fn list_to_hashmap_encoding(canonical_list: Vec<(String, u8)>) -> HashMap<String, u8> {
+pub fn list_to_hashmap_encoding(canonical_list: Vec<(String, String)>) -> HashMap<String, String> {
     let mut canonical_map = HashMap::new();
 
     for (k, v) in canonical_list {
@@ -73,7 +73,7 @@ pub fn list_to_hashmap_encoding(canonical_list: Vec<(String, u8)>) -> HashMap<St
     canonical_map
 }
 
-pub fn list_to_hashmap_decoding(canonical_list: Vec<(String, u8)>) -> HashMap<u8, String> {
+pub fn list_to_hashmap_decoding(canonical_list: Vec<(String, String)>) -> HashMap<String, String> {
     let mut canonical_map = HashMap::new();
 
     for (k, v) in canonical_list {
@@ -82,14 +82,23 @@ pub fn list_to_hashmap_decoding(canonical_list: Vec<(String, u8)>) -> HashMap<u8
     canonical_map
 }
 
-pub(crate) fn list_to_canonical(first_list: Vec<(String, u8)>) -> Vec<(String, u8)> {
+pub(crate) fn list_to_canonical(first_list: Vec<(String, u8)>) -> Vec<(String, String)> {
     let mut canonical_list = vec![];
-    let mut code = 0u8;
+    let mut code = 0u16;
+    let mut left_zeroes= 0;
     for (i, (v, s)) in first_list.iter().enumerate() {
-        canonical_list.push((v.to_owned(), code));
+        println!("code {}, zeros {}, s {}",code, left_zeroes, s);
+        left_zeroes =  *s - ((code as f64).log2().trunc() as u8 + 1);
+        if left_zeroes > 0 {
+            canonical_list.push((v.to_owned(), std::iter::repeat("0").take(left_zeroes as usize).collect::<String>() + &format!("{:b}", code)));
+        }
+        else {
+            canonical_list.push((v.to_owned(), format!("{:b}", code)));
+        }
 
         if i < first_list.len() - 1 {
             let (_, next_size) = first_list[i + 1];
+            // TODO this can break
             code = (code + 1) << (next_size - s);
         };
     }
@@ -115,36 +124,37 @@ pub fn to_list_for_canonical(map: HashMap<String, String>) -> Vec<(String, u8)> 
     list
 }
 
-pub fn max_encoded_length(map: &HashMap<String, u8>) -> u8 {
-    let mut max = 0u8;
+pub fn max_encoded_length(map: &HashMap<String, String>) -> u8 {
+    let mut max = 0;
 
-    for (_, size) in map {
-        let s = (*size as f32).log(2f32).trunc() as u8 +1;
+    for (_, k) in map {
+        let s = k.len();
         if s > max {
             max = s
         }
     }
 
-    max
+    max as u8
 }
 
-pub fn number_of_symbols(map: &HashMap<String, u8>) -> u8 {
+pub fn number_of_symbols(map: &HashMap<String, String>) -> u8 {
+    println!("map {:?} size {:?}", map, map.len());
     map.len() as u8
 }
 
 
-pub fn length_list(map: &HashMap<String, u8>) -> Vec<u8> {
+pub fn length_list(map: &HashMap<String, String>) -> Vec<u8> {
     let mut l: Vec<u8> = vec![0; max_encoded_length(map) as usize];
 
-    for (_, size) in map {
-        let s = (*size as f32).log(2f32).trunc() as u8 +1;
-        l[s as usize -1] += 1;
+    for (_, k) in map {
+        let s = k.len();
+        l[s -1] += 1;
     }
 
     l
 }
 
-pub fn to_ordered_list(map: &HashMap<String, u8>) -> Vec<u8> {
+pub fn to_ordered_list(map: &HashMap<String, String>) -> Vec<u8> {
     let mut list = vec![];
 
     'outer: for (key, size) in map {
@@ -169,7 +179,7 @@ pub fn to_ordered_list(map: &HashMap<String, u8>) -> Vec<u8> {
     l
 }
 
-pub fn to_ordered_list_words(map: &HashMap<String, u8>) -> Vec<&String> {
+pub fn to_ordered_list_words(map: &HashMap<String, String>) -> Vec<&String> {
     let mut list = vec![];
 
     'outer: for (key, size) in map {

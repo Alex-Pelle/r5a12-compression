@@ -43,6 +43,7 @@ fn main() {
     let mut mode: Option<Mode> = None;
     let mut from: Option<String>= None;
     let mut to: Option<String> = None;
+    let mut is_words: Option<bool> = None;
 
     for arg in &args[1..] {
         match arg.as_str() {
@@ -56,6 +57,18 @@ fn main() {
                 mode = Some(DECODE);
             } else {
                 println!("Un seul mode à la fois svp");
+                return;
+            },
+            "-w"|"--words" => if is_words == None {
+                is_words = Some(true);
+            } else {
+                println!("Choississez entre mot ou caractères");
+                return;
+            },
+            "-C"|"--chars"|"--characters" => if is_words == None {
+                is_words = Some(false);
+            } else {
+                println!("Choississez entre mot ou caractères");
                 return;
             },
             arg if arg.to_string().chars().next().unwrap() == '-' => {
@@ -83,7 +96,7 @@ fn main() {
     }
 
     match mode.unwrap() {
-        ENCODE => encode_file(from.unwrap(), to.unwrap()),
+        ENCODE => encode_file(from.unwrap(), to.unwrap(), is_words),
         DECODE => decode_file(from.unwrap(), to.unwrap())
     }
 

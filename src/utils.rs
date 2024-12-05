@@ -45,11 +45,15 @@ pub fn string_to_binary(s: String) -> Vec<u8> {
 }
 
 pub fn binary_word_to_string(bit_reader: &mut BitReader<File, BigEndian>) -> String {
-    let size = bit_reader.read::<u8>(8).unwrap();
     let mut s = String::new();
 
-    for _ in 0..size {
-        s += (bit_reader.read::<u8>(8).unwrap() as char).to_string().as_mut_str();
+    loop {
+        let tmp = bit_reader.read::<u8>(8).unwrap() as char;
+        if tmp == '\0' {
+            break;
+        }
+        s += tmp.to_string().as_mut_str();
+        println!("{:?}", s);
     }
 
     s
